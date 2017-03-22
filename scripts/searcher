@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""searcher command line tool."""
+
+from searcher.main import main
+
+main()
