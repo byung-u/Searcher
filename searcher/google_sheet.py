@@ -31,7 +31,7 @@ def insert_google_sheet(s, searched):
 
 
 def get_last_index(s):
-    rangeName = 'Sheet1!A3:L'
+    rangeName = 'temp_sheet!A3:L'
     result = s.service.spreadsheets().values().get(
         spreadsheetId=s.spreadsheetId, range=rangeName).execute()
     values = result.get('values', [])
