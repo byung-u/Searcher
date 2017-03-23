@@ -31,7 +31,7 @@ def insert_google_sheet(s, searched):
 
 
 def get_last_index(s):
-    rangeName = 'temp_sheet!A3:L'
+    rangeName = 'temp_sheet!A3:O'
     result = s.service.spreadsheets().values().get(
         spreadsheetId=s.spreadsheetId, range=rangeName).execute()
     values = result.get('values', [])
@@ -61,5 +61,9 @@ def append_google_sheet(s, user_id, link, title, date, web_type, web_sub_type=No
     searched_msg.append(web_type)  # naver, daum, ...
     searched_msg.append(web_sub_type)  # cafe, blog, ...
     searched_msg.append('1')  # default
+    searched_msg.append('')
+    searched_msg.append('')
+    searched_msg.append('')
+    searched_msg.append(user_id)
 
     insert_google_sheet(s, searched_msg)
