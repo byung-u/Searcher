@@ -12,8 +12,8 @@ from searcher.google_sheet import append_google_sheet
 
 def search_webs(s):
     for key in s.keys:
-        get_daum(s, key)
-        # get_naver(s, key)
+        # get_daum(s, key)
+        get_naver(s, key)
         # get_today_humor(s, key):
         # get_ppomppu(s, key)
         return  # TODO : remove after test
@@ -72,22 +72,35 @@ def get_naver(s, key, mode='blog'):
     data = response_body.decode('utf-8')
     js = json.loads(data)
     items = int(js["display"])
-    # print(items, type(items))
     for i in range(0, items):
-        print(js["items"][i]["title"])
+        # http://blog.naver.com/ecampus_kgu?Redirect=Log&amp;logNo=220965327425
         page_num = get_naver_blog_page_num(js["items"][i]["link"])
+        # http://blog.naver.com/ecampus_kgu
+        user_id = get_naver_blog_user_id(js["items"][i]["bloggerlink"])
         naver_blog_link = '%s/%s' % (js["items"][i]["bloggerlink"], page_num)
-        print(naver_blog_link)
-        print(js["items"][i]["description"])
+        post_date = get_naver_blog_post_date(js["items"][i]["postdate"])
+        # print(js["items"][i]["description"])
+        title = js["items"][i]["title"]
+        append_google_sheet(s, user_id, naver_blog_link, title, post_date,
+                            'naver', 'blog')
     return
 
 
-def get_naver_blog_page_num(naver_blog_link):
-    temp_link = naver_blog_link.split('=')
+def get_naver_blog_page_num(naver_blog_inner_link):
+    temp_link = naver_blog_inner_link.split('=')
     return temp_link[-1]
 
 
-def get_daum(s, key, mode='accu'):
+def get_naver_blog_user_id(naver_blog_link):
+    u = re.search(r'^http://blog.naver.com/(.*)', naver_blog_link)
+    return u.group(1)
+
+
+def get_naver_blog_post_date(post_date):  # 20170323 -> 2017-03-23
+    return '-'.join([post_date[:4], post_date[4:6], post_date[6:]])
+
+
+def get_daum(s, key, mode='date'):
 
     # https://apis.daum.net/search/blog?apikey={apikey}&q=다음&output=json
     url = 'https://apis.daum.net/search/blog?apikey=%s&q=' % (s.daum_app_key)
