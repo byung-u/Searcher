@@ -7,13 +7,15 @@ import sys
 from bs4 import BeautifulSoup
 from requests import get, codes
 
+from searcher.google_sheet import append_google_sheet
 
-def search_web_browsers(s):
+
+def search_webs(s):
     for key in s.keys:
-        # get_daum(s, key)
+        get_daum(s, key)
         # get_naver(s, key)
         # get_today_humor(s, key):
-        get_ppomppu(s, key)
+        # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
 
@@ -22,11 +24,11 @@ def get_today_humor(s, key):
     url = 'http://www.todayhumor.co.kr/board/list.php?kind=search&keyfield=subject&keyword=%s&Submit.x=0&Submit.y=0&Submit=검색' % key
     r = get(url)
     if r.status_code != codes.ok:
-        print('[TodayHumor] request error')
+        s.logger.error('[TodayHumor] request error')
         return None
 
     soup = BeautifulSoup(r.text, 'html.parser')
-    for l in soup.find_all(match_soup_class(['table_container'])):
+    for l in soup.find_all(s.match_soup_class(['table_container'])):
         idx = 0
         for o in l.find_all('td'):
             idx += 1
@@ -42,14 +44,14 @@ def get_today_humor(s, key):
 
 def get_ppomppu(s, key):
     url = 'http://www.todayhumor.co.kr/board/list.php?kind=search&keyfield=subject&keyword=%s&Submit.x=0&Submit.y=0&Submit=검색' % '사람'
-    #url = 'http://www.ppomppu.co.kr/search_bbs.php?keyword=%s' % key
+    # url = 'http://www.ppomppu.co.kr/search_bbs.php?keyword=%s' % key
     r = get(url)
     if r.status_code != codes.ok:
-        s.logger.error('[Oh_U] Error Code: %d', rescode)
+        s.logger.error('[Oh_U] request error')
         return None
     soup = BeautifulSoup(r.text, 'html.parser')
-    #soup = BeautifulSoup(r.content.decode('utf-8r', 'replace'), 'html.parser')
-    #soup = BeautifulSoup(r.content.decode('euc-kr', 'ignore'), 'html.parser')
+    # soup = BeautifulSoup(r.content.decode('utf-8r', 'replace'), 'html.parser')
+    # soup = BeautifulSoup(r.content.decode('euc-kr', 'ignore'), 'html.parser')
     print(soup)
 
 
@@ -70,18 +72,20 @@ def get_naver(s, key, mode='blog'):
     data = response_body.decode('utf-8')
     js = json.loads(data)
     items = int(js["display"])
-    #print(items, type(items))
+    # print(items, type(items))
     for i in range(0, items):
         print(js["items"][i]["title"])
         page_num = get_naver_blog_page_num(js["items"][i]["link"])
         naver_blog_link = '%s/%s' % (js["items"][i]["bloggerlink"], page_num)
         print(naver_blog_link)
         print(js["items"][i]["description"])
-    return 
+    return
+
 
 def get_naver_blog_page_num(naver_blog_link):
     temp_link = naver_blog_link.split('=')
     return temp_link[-1]
+
 
 def get_daum(s, key, mode='accu'):
 
@@ -103,53 +107,71 @@ def get_daum(s, key, mode='accu'):
         return None
 
     # http://xxx.tistory.com
-    p = re.compile(r'^http://\w+.tistory.com/\d+')
+    p1 = re.compile(r'^http://\w+.tistory.com/\d+')
+    # http://brunch.co.kr/@xxx/x
+    p2 = re.compile(r'^https://brunch.co.kr/\@\w+/\d+')
 
-    send_msg = []
     response_body = response.read()
     data = response_body.decode('utf-8')
     res = json.loads(data)
     for i in range(len(res['channel']['item'])):
         # title = res["channel"]['item'][i]['title']
         daum_blog_link = res["channel"]['item'][i]['link']
-        if (s.check_duplicate_item(daum_blog_link, 'daum')):
-            continue  # True duplicated
-        m = p.match(daum_blog_link)
-        if m is None:  # other
-            msg = read_daum_blog_link(s, daum_blog_link, 'other')
-        else:  # tistory blog
-            msg = read_daum_blog_link(s, daum_blog_link, 'tistory')
-        send_msg.append(daum_blog_link)
-        send_msg.append("\n".join(msg))
-    print(send_msg)
+        # TODO : add duplicated check all functions at once.
+        # if (s.check_duplicate_item(daum_blog_link, 'daum')):
+        #     continue  # True duplicated
+        m = p1.match(daum_blog_link)
+        if m:
+            user_id = re.search(r'^http://(.*).tistory.com/\d+', daum_blog_link)
+            title, date = parse_tistory_page(s, daum_blog_link)
+            if title is None or data is None:
+                continue
+            append_google_sheet(s, user_id, daum_blog_link, title, date,
+                                'daum', 'blog')
+        else:
+            m = p2.match(daum_blog_link)
+            if m:
+                user_id = re.search('https://brunch.co.kr/\@(.*)/\d+', daum_blog_link)
+                title, date = parse_brunch_page(daum_blog_link)
+                if title is None or data is None:
+                    continue
+                append_google_sheet(s, user_id, daum_blog_link, title, date,
+                                    'daum', 'blog')
+            else:
+                print('[else]', daum_blog_link)  # drop
     return
 
 
-def read_daum_blog_link(s, daum_blog_link, mode):
-    result = []
+def parse_tistory_page(s, daum_blog_link):
     r = get(daum_blog_link)
     soup = BeautifulSoup(r.text, 'html.parser')
-    if mode == 'other':
-        for a in soup.find_all(s.match_soup_class(['view'])):
-            for p in soup.find_all('p'):
-                if len(p.text.strip()) == 0:
-                    continue
-                result.append(p.text.replace('\n', ' ').strip())
-        return result
-    else:
-        for a in soup.find_all(s.match_soup_class(['article'])):
-            for p in soup.find_all('p'):
-                if len(p.text.strip()) == 0:
-                    continue
-                if p.text.find('adsbygoogle') >= 0:
-                    continue
-                result.append(p.text.strip())
+    rows = None
+    for a in soup.find_all(s.match_soup_class(['article'])):
+        rows = a.findChildren(['th', 'tr'])
 
-        for a in soup.find_all(s.match_soup_class(['area_view'])):
-            for p in soup.find_all('p'):
-                if len(p.text.strip()) == 0:
-                    continue
-                if p.text.find('adsbygoogle') >= 0:
-                    continue
-                result.append(p.text.strip())
-        return result
+    if rows is None:
+        return None, None
+
+    for row in rows:
+        cells = row.findChildren('td')
+        for cell in cells:
+            message = row.text.strip()
+            return get_title_and_user_id(message.strip('\n'), 'tistory')
+    return None, None
+
+
+def parse_brunch_page(daum_blog_link):
+        r = get(daum_blog_link)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        for a in soup.find_all('meta', property="ks:richscrap"):
+            res = json.loads(a['content'])
+            return (res['header']['title'], res['header']['date'].replace('.', '-'))
+
+
+def get_title_and_user_id(message, blog_type=None):
+    if blog_type == 'tistory':
+        temp = message.split()
+        return' '.join(temp[:-2]), temp[-1].replace('.', '-')
+    else:
+        print('invalid blog_type: ', blog_type)
+        return None, None

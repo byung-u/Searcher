@@ -1,17 +1,27 @@
 """searcher command line tool."""
 # -*- coding: utf-8 -*-
+import httplib2
 import logging
 import os
 import sqlite3
 import sys
 
+from apiclient import discovery
 from datetime import datetime
+from oauth2client import client
+from oauth2client import tools
+from oauth2client.file import Storage
 
-from searcher.web import search_web_browsers
+from searcher.web import search_webs
 
 
 class Searcher:
     def __init__(self):
+        self.operator_name = os.environ.get('MOHW_OPERATOR')  # daum
+
+        now = datetime.now() 
+        self.today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
+
         self.daum_client_id = os.environ.get('DAUM_CLIENT_ID')  # daum
         self.daum_secret = os.environ.get('DAUM_CLIENT_SECRET')
         self.daum_app_key = os.environ.get('DAUM_APP_KEY')
@@ -19,7 +29,6 @@ class Searcher:
         self.naver_secret = os.environ.get('NAVER_CLIENT_SECRET')
         self.keys = []
 
-        now = datetime.now()  # log
         log_file = '%s/log/searcher_%4d%02d%02d.log' % (os.getenv("HOME"),
                                                         now.year,
                                                         now.month,
@@ -47,6 +56,41 @@ class Searcher:
             )''')
         self.conn.commit()
 
+        self.mohw_client_secret = os.environ.get('MOHW_CLIENT_SECRET')  # google sheet
+        self.credential_file_name = os.environ.get('MOHW_CREDENTIAL_FILE')
+        self.spreadsheetId = os.environ.get('MOHW_SPREAD_SHEET_ID')
+        try:
+            import argparse
+            self.flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+        except ImportError:
+            self.flags = None
+
+        credentials = self.get_credentials()
+        http = credentials.authorize(httplib2.Http())
+        discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?' 'version=v4')
+        self.service = discovery.build('sheets', 'v4', http=http,
+                                       discoveryServiceUrl=discoveryUrl)
+
+    def get_credentials(self):
+        home_dir = os.path.expanduser('~')
+        credential_dir = os.path.join(home_dir, '.credentials')
+        if not os.path.exists(credential_dir):
+            os.makedirs(credential_dir)
+        credential_path = os.path.join(credential_dir, self.credential_file_name)
+
+        store = Storage(credential_path)
+        credentials = store.get()
+        if not credentials or credentials.invalid:
+            flow = client.flow_from_clientsecrets(self.mohw_client_secret,
+                                                  'https://www.googleapis.com/auth/spreadsheets')
+            flow.user_agent = 'support'  # APPLICATION_NAME
+            if self.flags:
+                credentials = tools.run_flow(flow, store, self.flags)
+            else:  # Needed only for compatibility with Python 2.6
+                credentials = tools.run(flow, store)
+            print('Storing credentials to ' + credential_path)
+        return credentials
+
     def check_duplicate_item(self, web_info, web_type):
         if (web_type is None) or (web_info is None):
             return False
@@ -72,5 +116,5 @@ def main() -> None:
     keywords = os.environ.get('MOHW_KEYWORD')  # 보건복지부
     s.keys = keywords.split(',')
 
-    search_web_browsers(s)  # start
+    search_webs(s)  # start
     sys.exit(0)
