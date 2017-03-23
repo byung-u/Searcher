@@ -14,10 +14,57 @@ def search_webs(s):
     for key in s.keys:
         # get_daum(s, key)
         # get_naver(s, key)
-        get_today_humor(s, key)
+        # get_today_humor(s, key)
+        get_nate_pann(s, key)
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
+
+
+def get_nate_pann(s, key):
+    url = 'http://pann.nate.com/search?searchType=A&q=%s' % key
+    r = get(url)
+    if r.status_code != codes.ok:
+        s.logger.error('[Nate] request error')
+        return None
+
+    soup = BeautifulSoup(r.text, 'html.parser')
+    for srch in soup.find_all(s.match_soup_class(['srch_list'])):
+        rows = srch.findChildren(['dt', 'dl'])
+        for row in rows:
+            cells = row.findChildren('dt')
+            for cell in cells:
+                info = row.text.strip().split('\n')
+                title = info[0]
+                date = info[-1].replace('.', '-')
+                user_id, post_date = get_nate_id_and_date(date, info[-2])
+                if user_id is None or post_date is None:
+                    continue
+                append_google_sheet(s, user_id, row.a['href'], title, post_date,
+                                    'NATE', '판')
+
+
+def get_nate_id_and_date(date, user_info):
+    if len(date) == len('17-03-23'):
+        post_date = '20%s' % date
+        return user_info, post_date
+    else:
+        u1 = re.search('(.*)이야기(.*) ', date)
+        if u1 is not None:  # 10대 이야기I__D17-03-23 02:18
+            u2 = re.search('(.*)-(.*)-(.*)', u1.group(2))  # I__D17-03-23
+            user_id_year = (u2.group(1))  # I__D17
+            user_id = user_id_year[:-2]   # I__D
+            year = user_id_year[-2:]      # 17
+            post_date = '20%s-%s-%s' % (year, u2.group(2), u2.group(3))
+            return user_id, post_date
+        else:  # 아이디17-03-23 00:10
+            u2 = re.search('(.*)-(.*)-(.*) ', date)  # 아이디17-03-23
+            user_id_year = (u2.group(1))  # 아이디17
+            user_id = user_id_year[:-2]   # 아이디
+            year = user_id_year[-2:]  # 17
+            post_date = '20%s-%s-%s' % (year, u2.group(2), u2.group(3))
+            return user_id, post_date
+    return None, None
 
 
 def get_today_humor(s, key):
@@ -104,7 +151,7 @@ def get_naver(s, key, mode='blog'):
         # print(js["items"][i]["description"])
         title = js["items"][i]["title"]
         append_google_sheet(s, user_id, naver_blog_link, title, post_date,
-                            'naver', 'blog')
+                            'NAVER', '블로그')
     return
 
 
@@ -162,7 +209,7 @@ def get_daum(s, key, mode='date'):
             if title is None or post_date is None:
                 continue
             append_google_sheet(s, user_id, daum_blog_link, title, post_date,
-                                'daum', 'blog')
+                                'DAUM', '블로그')
         else:
             m = p2.match(daum_blog_link)
             if m:
@@ -171,7 +218,7 @@ def get_daum(s, key, mode='date'):
                 if title is None or post_date is None:
                     continue
                 append_google_sheet(s, user_id, daum_blog_link, title, post_date,
-                                    'daum', 'blog')
+                                    'DAUM', '블로그')
             else:
                 print('[else]', daum_blog_link)  # drop
     return
