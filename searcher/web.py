@@ -13,8 +13,8 @@ from searcher.google_sheet import append_google_sheet
 def search_webs(s):
     for key in s.keys:
         # get_daum(s, key)
-        get_naver(s, key)
-        # get_today_humor(s, key):
+        # get_naver(s, key)
+        get_today_humor(s, key)
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
@@ -28,18 +28,40 @@ def get_today_humor(s, key):
         return None
 
     soup = BeautifulSoup(r.text, 'html.parser')
-    for l in soup.find_all(s.match_soup_class(['table_container'])):
+    for l in soup.find_all(s.match_soup_class(['view'])):
         idx = 0
+        temp_url = None
         for o in l.find_all('td'):
             idx += 1
             if idx == 1:
                 continue
+            # print('idx=', idx, '=>', o.text)
+            try:
+                o.a['href']
+                if temp_url is None:
+                    temp_url = o.a['href']
+                    u = re.search('(.*)&keyfield(.*)', temp_url)
+                    if u is None:
+                        temp_url = None
+                    else:
+                        url = 'http://www.todayhumor.co.kr%s' % u.group(1)
+            except TypeError:
+                pass
+            # print('idx=', idx, 'text=', o.text)
+            if idx % 7 == 3:
+                title = o.text
             if idx % 7 == 4:
-                print('idx=', idx, 'title=', o.text)
+                user_id = o.text
             if idx % 7 == 5:
-                print('idx=', idx, 'id=', o.text)
-            if idx % 7 == 6:
-                print('idx=', idx, 'date=', o.text)
+                temp_date = o.text
+                temp_date = temp_date.replace('/', '-')
+                rm_hm = temp_date.split()  # rm hour, minute
+                post_date = '20%s' % rm_hm[0]
+
+                append_google_sheet(s, user_id, url, title, post_date, '오늘의 유머')
+                user_id, url, title, post_date = None, None, None, None
+                temp_url = None
+    return None
 
 
 def get_ppomppu(s, key):
@@ -136,19 +158,19 @@ def get_daum(s, key, mode='date'):
         m = p1.match(daum_blog_link)
         if m:
             user_id = re.search(r'^http://(.*).tistory.com/\d+', daum_blog_link)
-            title, date = parse_tistory_page(s, daum_blog_link)
-            if title is None or data is None:
+            title, post_date = parse_tistory_page(s, daum_blog_link)
+            if title is None or post_date is None:
                 continue
-            append_google_sheet(s, user_id, daum_blog_link, title, date,
+            append_google_sheet(s, user_id, daum_blog_link, title, post_date,
                                 'daum', 'blog')
         else:
             m = p2.match(daum_blog_link)
             if m:
                 user_id = re.search('https://brunch.co.kr/\@(.*)/\d+', daum_blog_link)
-                title, date = parse_brunch_page(daum_blog_link)
-                if title is None or data is None:
+                title, post_date = parse_brunch_page(daum_blog_link)
+                if title is None or post_date is None:
                     continue
-                append_google_sheet(s, user_id, daum_blog_link, title, date,
+                append_google_sheet(s, user_id, daum_blog_link, title, post_date,
                                     'daum', 'blog')
             else:
                 print('[else]', daum_blog_link)  # drop
