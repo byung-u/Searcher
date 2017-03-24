@@ -13,9 +13,10 @@ from searcher.google_sheet import append_google_sheet
 def search_webs(s):
     for key in s.keys:
         # get_daum(s, key)
+        get_daum_agora(s, key)
         # get_naver(s, key)
         # get_today_humor(s, key)
-        get_nate_pann(s, key)
+        # get_nate_pann(s, key)
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
@@ -257,3 +258,31 @@ def get_title_and_user_id(message, blog_type=None):
     else:
         print('invalid blog_type: ', blog_type)
         return None, None
+
+
+def get_daum_agora(s, key):
+
+    url = 'http://agora.media.daum.net/nsearch/total?query=%s' % '사람'
+    r = get(url)
+    if r.status_code != codes.ok:
+        print('[Daum Agora] request error')
+        return None
+
+    soup = BeautifulSoup(r.text, 'html.parser')
+    for sre in soup.find_all(s.match_soup_class(['sResult'])):
+        rows = sre.findChildren(['dt', 'dl'])
+        for row in rows:
+            cells = row.findChildren('dt')
+            for cell in cells:
+                date = row.find(s.match_soup_class(['date']))
+                temp_date = date.text.split(' ')
+                post_date = temp_date[0].replace('.', '-')
+                if post_date.startswith('2') is False:
+                    continue
+                for a_tag in row.find_all('a'):
+                    user_id = a_tag.text  # last text is user_id, so overwrite.
+                # print(row.a.text) # title
+                # #print(row.a['href'])  # url
+                # print(user_id.strip())
+                append_google_sheet(s, user_id.strip(), row.a['href'], 'No title', post_date,
+                                    'DAUM', '아고라')
