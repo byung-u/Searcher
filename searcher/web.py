@@ -12,8 +12,8 @@ from searcher.google_sheet import append_google_sheet
 
 def search_webs(s):
     for key in s.keys:
-        # get_daum(s, key)
-        get_daum_agora(s, key)
+        get_daum(s, key)
+        # get_daum_agora(s, key)
         # get_naver(s, key)
         # get_today_humor(s, key)
         # get_nate_pann(s, key)
@@ -113,8 +113,7 @@ def get_today_humor(s, key):
 
 
 def get_ppomppu(s, key):
-    url = 'http://www.todayhumor.co.kr/board/list.php?kind=search&keyfield=subject&keyword=%s&Submit.x=0&Submit.y=0&Submit=검색' % '사람'
-    # url = 'http://www.ppomppu.co.kr/search_bbs.php?keyword=%s' % key
+    url = 'http://www.ppomppu.co.kr/search_bbs.php?keyword=%s' % key
     r = get(url)
     if r.status_code != codes.ok:
         s.logger.error('[Oh_U] request error')
@@ -203,7 +202,7 @@ def get_daum(s, key, mode='date'):
         # TODO : add duplicated check all functions at once.
         # if (s.check_duplicate_item(daum_blog_link, 'daum')):
         #     continue  # True duplicated
-        m = p1.match(daum_blog_link)
+        m = p1.match(daum_blog_link)  # http://xxx.tistory.com
         if m:
             user_id = re.search(r'^http://(.*).tistory.com/\d+', daum_blog_link)
             title, post_date = parse_tistory_page(s, daum_blog_link)
@@ -211,17 +210,20 @@ def get_daum(s, key, mode='date'):
                 continue
             append_google_sheet(s, user_id.group(1), daum_blog_link, title, post_date,
                                 'DAUM', '블로그')
+            continue
+
+        m = p2.match(daum_blog_link)  # http://brunch.co.kr/@xxx/x
+        if m:
+            user_id = re.search('https://brunch.co.kr/\@(.*)/\d+', daum_blog_link)
+            title, post_date = parse_brunch_page(daum_blog_link)
+            if title is None or post_date is None:
+                continue
+            append_google_sheet(s, user_id.group(1), daum_blog_link, title, post_date,
+                                'DAUM', '블로그')
+            continue
         else:
-            m = p2.match(daum_blog_link)
-            if m:
-                user_id = re.search('https://brunch.co.kr/\@(.*)/\d+', daum_blog_link)
-                title, post_date = parse_brunch_page(daum_blog_link)
-                if title is None or post_date is None:
-                    continue
-                append_google_sheet(s, user_id.group(1), daum_blog_link, title, post_date,
-                                    'DAUM', '블로그')
-            else:
-                print('[else]', daum_blog_link)  # drop
+            print('[drop]', daum_blog_link)  # drop
+
     return
 
 
@@ -244,11 +246,11 @@ def parse_tistory_page(s, daum_blog_link):
 
 
 def parse_brunch_page(daum_blog_link):
-        r = get(daum_blog_link)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        for a in soup.find_all('meta', property="ks:richscrap"):
-            res = json.loads(a['content'])
-            return (res['header']['title'], res['header']['date'].replace('.', '-'))
+    r = get(daum_blog_link)
+    soup = BeautifulSoup(r.text, 'html.parser')
+    for a in soup.find_all('meta', property="ks:richscrap"):
+        res = json.loads(a['content'])
+        return (res['header']['title'], res['header']['date'].replace('.', '-'))
 
 
 def get_title_and_user_id(message, blog_type=None):
