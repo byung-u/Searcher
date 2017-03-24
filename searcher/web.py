@@ -209,7 +209,7 @@ def get_daum(s, key, mode='date'):
             title, post_date = parse_tistory_page(s, daum_blog_link)
             if title is None or post_date is None:
                 continue
-            append_google_sheet(s, user_id, daum_blog_link, title, post_date,
+            append_google_sheet(s, user_id.group(1), daum_blog_link, title, post_date,
                                 'DAUM', '블로그')
         else:
             m = p2.match(daum_blog_link)
@@ -218,7 +218,7 @@ def get_daum(s, key, mode='date'):
                 title, post_date = parse_brunch_page(daum_blog_link)
                 if title is None or post_date is None:
                     continue
-                append_google_sheet(s, user_id, daum_blog_link, title, post_date,
+                append_google_sheet(s, user_id.group(1), daum_blog_link, title, post_date,
                                     'DAUM', '블로그')
             else:
                 print('[else]', daum_blog_link)  # drop
