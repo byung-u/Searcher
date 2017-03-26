@@ -12,13 +12,14 @@ from searcher.google_sheet import append_google_sheet
 
 def search_webs(s):
     for key in s.keys:
-        # get_daum(s, key)
+        get_daum(s, key)
         # get_daum_agora(s, key)
         # get_naver(s, key)
         # get_today_humor(s, key)
         # get_nate_pann(s, key)
+        # get_twitter_search(s, key)
+
         # get_ppomppu(s, key)
-        get_twitter_search(s, key)
         return  # TODO : remove after test
     return
 
@@ -242,7 +243,7 @@ def parse_tistory_page(s, daum_blog_link):
         cells = row.findChildren('td')
         for cell in cells:
             message = row.text.strip()
-            return get_title_and_user_id(message.strip('\n'), 'tistory')
+            return get_title_and_user_id(s, message.strip('\n'), 'tistory')
     return None, None
 
 
@@ -254,10 +255,15 @@ def parse_brunch_page(daum_blog_link):
         return (res['header']['title'], res['header']['date'].replace('.', '-'))
 
 
-def get_title_and_user_id(message, blog_type=None):
+def get_title_and_user_id(s, message, blog_type=None):
     if blog_type == 'tistory':
         temp = message.split()
-        return' '.join(temp[:-2]), temp[-1].replace('.', '-')
+        p = re.compile(r'^\d+:\d+:\d+')
+        m = p.match(temp[-1])
+        if m is None:  # ok 'YYYY-MM-DD'
+            return' '.join(temp[:-2]), temp[-1].replace('.', '-')
+        else:
+            return' '.join(temp[:-2]), s.today
     else:
         print('invalid blog_type: ', blog_type)
         return None, None
