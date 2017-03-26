@@ -12,16 +12,33 @@ from searcher.google_sheet import append_google_sheet
 
 def search_webs(s):
     for key in s.keys:
-        get_daum(s, key)
+        # get_daum(s, key)
         # get_daum_agora(s, key)
         # get_naver(s, key)
         # get_today_humor(s, key)
         # get_nate_pann(s, key)
         # get_twitter_search(s, key)
+        get_dcinside(s, key)
 
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
+
+
+def get_dcinside(s, key):
+    url = 'http://search.dcinside.com/post/q/%s' % key
+    r = get(url)
+    if r.status_code != codes.ok:
+        print('[DCINSIDE] request error')
+        return None
+
+    soup = BeautifulSoup(r.text, 'html.parser')
+    for thumb in soup.find_all(s.match_soup_class(['thumb_list'])):
+        for thumb_txt in thumb.find_all(s.match_soup_class(['thumb_txt'])):
+            post_date = thumb_txt.span.string.split()
+            append_google_sheet(s, '직접채워야함', thumb_txt.a['href'],
+                                'no title', post_date[0].replace('.', '-'),
+                                'DCINSIDE')
 
 
 def get_nate_pann(s, key):
