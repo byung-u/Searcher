@@ -11,13 +11,25 @@ from datetime import datetime
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
-
+from twython import Twython
 from searcher.web import search_webs
 
 
 class Searcher:
     def __init__(self):
         self.operator_name = os.environ.get('MOHW_OPERATOR')  # daum
+
+        self.twitter_app_key = os.environ.get('TWITTER_APP_KEY')
+        self.twitter_app_secret = os.environ.get('TWITTER_APP_SECRET')
+        self.twitter_access_token = os.environ.get('TWITTER_ACCESS_TOKEN')
+        self.twitter_access_secret = os.environ.get('TWITTER_ACCESS_SECRET')
+        self.twitter_id = os.environ.get('TWITTER_ID')
+        self.twitter = Twython(
+            self.twitter_app_key,
+            self.twitter_app_secret,
+            self.twitter_access_token,
+            self.twitter_access_secret
+        )
 
         now = datetime.now() 
         self.today = '%4d-%02d-%02d' % (now.year, now.month, now.day)

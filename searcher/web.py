@@ -6,18 +6,19 @@ import sys
 
 from bs4 import BeautifulSoup
 from requests import get, codes
-
+from twython import TwythonError
 from searcher.google_sheet import append_google_sheet
 
 
 def search_webs(s):
     for key in s.keys:
-        get_daum(s, key)
+        # get_daum(s, key)
         # get_daum_agora(s, key)
         # get_naver(s, key)
         # get_today_humor(s, key)
         # get_nate_pann(s, key)
         # get_ppomppu(s, key)
+        get_twitter_search(s, key)
         return  # TODO : remove after test
     return
 
@@ -288,3 +289,36 @@ def get_daum_agora(s, key):
                 # print(user_id.strip())
                 append_google_sheet(s, user_id.strip(), row.a['href'], 'No title', post_date,
                                     'DAUM', '아고라')
+
+
+def get_twitter_search(s, key):
+    try:
+        timeline = s.twitter.search(
+            q=key, result_type='popular', count=20)
+
+        dump_tl = json.dumps(timeline)  # dict -> json
+        tl = json.loads(dump_tl)
+        for i in tl['statuses']:
+            for url in i['entities']['urls']:
+                post_url = url['url']
+                break  # need 1st url
+            post_date = get_twitter_post_date(i['created_at'])
+            append_google_sheet(s, i['text'], post_url, 'No title', post_date,
+                                'TWITTER')
+            # print('[USER_CREATED_AT]', i['user']['created_at'])
+
+    except TwythonError as e:
+        s.logger.error('TwythonError %s', e)
+
+
+def get_twitter_post_date(date_str):
+    split_date = date_str.split()
+    post_date = '%s-%02d-%02d' % (split_date[5],
+                                  month_converter(split_date[1]),
+                                  int(split_date[2]))
+    return post_date
+
+
+def month_converter(month):
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return months.index(month) + 1
