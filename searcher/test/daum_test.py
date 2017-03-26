@@ -80,15 +80,20 @@ class UseDaum:
 
         r = get(url)
         soup = BeautifulSoup(r.text, 'html.parser')
+        rows = None
         for a in soup.find_all(ft.match_soup_class(['article'])):
             rows = a.findChildren(['th', 'tr'])
+
+        if rows is None:
+            return None
 
         for row in rows:
             cells = row.findChildren('td')
             for cell in cells:
                 message = row.text.strip()
+                print('[MSG]', message)
                 title, user_id = self.get_title_and_user_id(message.strip('\n'))
-                print(title, user_id)
+                print('[RES]', title, user_id)
 
 
     def get_title_and_user_id(self, message):
@@ -127,13 +132,13 @@ class UseDaum:
                 if m is None:  # other
                     m2 = p2.match(res["channel"]['item'][i]['link'])
                     if m2 is not None: 
-                        msg = self.read_other_blog_link(ft, res["channel"]['item'][i]['link'])
-                        return None
+                        print('[brunch] pass')
+                        # msg = self.read_other_blog_link(ft, res["channel"]['item'][i]['link'])
                     else:
                         print('[other]: ', res["channel"]['item'][i]['link'])
                 else:  # tistory blog
                     print('[tistory]: ', res["channel"]['item'][i]['link'])
-                    #msg = self.read_daum_blog_link(ft, res["channel"]['item'][i]['link'])
+                    msg = self.read_daum_blog_link(ft, res["channel"]['item'][i]['link'])
 
                 #send_msg_list.append(res["channel"]['item'][i]['link'])
                 #send_msg_list.append("\n".join(msg))
@@ -156,7 +161,7 @@ class UseDaum:
 def main():
     ft = FTbot()
     d = UseDaum(ft)
-    d.request_search_data(ft, "사람")
+    d.request_search_data(ft, "시험")
 
 
 if __name__ == '__main__':
