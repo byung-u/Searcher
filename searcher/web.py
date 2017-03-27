@@ -19,11 +19,49 @@ def search_webs(s):
         # get_nate_pann(s, key)
         # get_twitter_search(s, key)
         # get_dcinside(s, key)
-        get_ilbe(s, key)
+        # get_ilbe(s, key)
+        get_bobedream(s, key)
 
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
+
+
+def get_bobedream(s, key):
+    for i in range(1, 5):  # 5 page search
+        url = 'http://www.bobaedream.co.kr/list?code=freeb&s_cate=&maker_no=&model_no=&or_gu=10&or_se=desc&s_selday=&pagescale=30&info3=&noticeShow=&s_select=&s_key=&level_no=&vdate=&type=list&page=%d' % i
+
+        r = get(url)
+        if r.status_code != codes.ok:
+            print('[BOBEDREAM] request error')
+            return None
+
+        soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+        url, user_id, post_date, title = None, None, None, None
+        for td in soup.find_all('td'):
+            try:
+                td.a['href']
+                title = td.a.text
+                if (title.find(key) > 0):
+                    url = td.a['href']
+            except TypeError:
+                txt = str(td)
+                if txt.startswith('<td class="date">'):
+                    if (td.text.find(':') > 0):
+                        post_date = s.today
+                    else:
+                        post_date = '2017-%s' % td.text.replace('/', '-')
+                    # print(url, user_id, post_date, title)
+                    if (url is not None and
+                            not url.startswith('http://www.bobaedream.co.kr') and
+                            not url.endswith('%2Flist%3Fcode%3Dfreeb')):  # ignore ad and popular
+                        url = 'http://www.bobaedream.co.kr/%s' % url
+                        append_google_sheet(s, user_id, url, title, post_date, '보배드림')
+                    url, user_id, post_date, title = None, None, None, None
+                else:
+                    spans = td.find_all('span', attrs={'class': 'author'})
+                    for span in spans:
+                        user_id = span.string
 
 
 def get_ilbe(s, key):
