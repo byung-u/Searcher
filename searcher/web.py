@@ -20,11 +20,51 @@ def search_webs(s):
         # get_twitter_search(s, key)
         # get_dcinside(s, key)
         # get_ilbe(s, key)
-        get_bobedream(s, key)
+        # get_bobedream(s, key)
+        get_insoya(s, key)
 
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
+
+
+def get_insoya(s, key):
+    for i in range(1, 2):  # 10 page search
+        url = 'http://www.insoya.com/bbs/zboard.php?id=talkmaple&page=%d&divpage=15' % i
+
+        r = get(url)
+        if r.status_code != codes.ok:
+            print('[GET] request error')
+            return None
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+        url, user_id, post_date, title = None, None, None, None
+        for td in soup.find_all('td'):
+            try:
+                td.a['href']
+                title = td.a.string
+                if title is not None and title.find(key) > 0:
+                    url = td.a['href']
+
+                if (url is not None and
+                        url.startswith('zboard.php?id=talkmaple')):
+                    url = 'http://www.insoya.com/bbs/%s' % url
+                    # print(url)
+            except TypeError:
+                spans = td.find_all('span', attrs={'class': 'memberSelect'})
+                for span in spans:
+                    if url is None:
+                        break
+                    user_id = span.string
+                    # print(user_id)
+                txt = str(td)
+                if txt.startswith('<td class="eng w_date">'):
+                    if url is not None:
+                        w_date = str(td.text).split()
+                        post_date = '20%s' % w_date[0].replace('.', '-')
+                        # print(user_id, url, title, post_date)
+                        append_google_sheet(s, user_id, url, title, post_date, '인소야닷컴')
+                    url, user_id, post_date, title = None, None, None, None
 
 
 def get_bobedream(s, key):
