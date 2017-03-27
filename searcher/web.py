@@ -18,11 +18,29 @@ def search_webs(s):
         # get_today_humor(s, key)
         # get_nate_pann(s, key)
         # get_twitter_search(s, key)
-        get_dcinside(s, key)
+        # get_dcinside(s, key)
+        get_ilbe(s, key)
 
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
+
+
+def get_ilbe(s, key):
+    url = 'https://www.ilbe.com/?act=IS&where=document&is_keyword=%s' % key
+    r = get(url)
+    if r.status_code != codes.ok:
+        print('[ILBE] request error')
+        return None
+
+    soup = BeautifulSoup(r.text, 'html.parser')
+    for sre in soup.find_all(s.match_soup_class(['searchResult'])):
+        for li in sre.find_all('li'):
+            ilbe = li.address.text.split('|')
+            # print('User ID: ', ilbe[0])
+            # print('post_date: ', ilbe[1].split()[0])
+            append_google_sheet(s, ilbe[0], li.a['href'], 'no title',
+                                ilbe[1].split()[0], '일간베스트')
 
 
 def get_dcinside(s, key):
