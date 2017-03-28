@@ -34,7 +34,7 @@ def get_insoya(s, key):
 
         r = get(url)
         if r.status_code != codes.ok:
-            print('[INSOYA] request error')
+            s.logger.error('[INSOYA] request error')
             return None
 
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -73,7 +73,7 @@ def get_bobedream(s, key):
 
         r = get(url)
         if r.status_code != codes.ok:
-            print('[BOBEDREAM] request error')
+            s.logger.error('[BOBEDREAM] request error')
             return None
 
         soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
@@ -108,7 +108,7 @@ def get_ilbe(s, key):
     url = 'https://www.ilbe.com/?act=IS&where=document&is_keyword=%s' % key
     r = get(url)
     if r.status_code != codes.ok:
-        print('[ILBE] request error')
+        s.logger.error('[ILGANBEST] request error')
         return None
 
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -125,7 +125,7 @@ def get_dcinside(s, key):
     url = 'http://search.dcinside.com/post/q/%s' % key
     r = get(url)
     if r.status_code != codes.ok:
-        print('[DCINSIDE] request error')
+        s.logger.error('[DCINSIDE] request error')
         return None
 
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -337,7 +337,7 @@ def get_daum(s, key, mode='date'):
                                 'DAUM', '블로그')
             continue
         else:
-            print('[drop]', daum_blog_link)  # drop
+            s.logger.info('[drop]', daum_blog_link)  # drop
 
     return
 
@@ -378,7 +378,7 @@ def get_title_and_user_id(s, message, blog_type=None):
         else:
             return' '.join(temp[:-2]), s.today
     else:
-        print('invalid blog_type: ', blog_type)
+        s.logger.error('invalid blog_type: ', blog_type)
         return None, None
 
 
@@ -387,7 +387,7 @@ def get_daum_agora(s, key):
     url = 'http://agora.media.daum.net/nsearch/total?query=%s' % '사람'
     r = get(url)
     if r.status_code != codes.ok:
-        print('[Daum Agora] request error')
+        s.logger.error('[DAUM AGORA] request error')
         return None
 
     soup = BeautifulSoup(r.text, 'html.parser')
