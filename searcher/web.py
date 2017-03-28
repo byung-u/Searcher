@@ -20,12 +20,53 @@ def search_webs(s):
         # get_twitter_search(s, key)
         # get_dcinside(s, key)
         # get_ilbe(s, key)
-        get_bobedream(s, key)
+        # get_bobedream(s, key)
         # get_insoya(s, key)
+        get_clien(s, key)
 
         # get_ppomppu(s, key)
         return  # TODO : remove after test
     return
+
+
+def get_clien(s, key):
+    for i in range(1, 10):  # 10 page search
+        url = 'http://www.clien.net/cs2/bbs/board.php?bo_table=kin&page=%d' % i
+        r = get(url)
+        if r.status_code != codes.ok:
+            s.logger.error('[CLIEN] request error')
+            return None
+
+        soup = BeautifulSoup(r.content.decode('utf-8', 'replace'), 'html.parser')
+        url, user_id, post_date = None, None, None
+        for ps in soup.find_all(s.match_soup_class(['mytr'])):
+            for td in ps.find_all('td'):
+                try:
+                    td.a['href']
+                    title = td.a.text
+                    if title.find(key) > 0:
+                        url = 'http://www.clien.net/cs2/%s' % td.a['href'][3:]
+                        if url.startswith('http://www.clien.net/cs2/bbs/board.php?bo_table=kin&sca='):
+                            url = None
+                except TypeError:
+                    pass
+
+                if user_id is None:
+                    spans = td.find_all('span', attrs={'class': 'member'})
+                    for span in spans:
+                        user_id = span.text
+                else:
+                    span = td.find('span')
+                    if span.text == '12-30':  # TODO : need to better way
+                        post_date = '%s-%s' % (s.last_year, span.text)
+                    elif span.text == '12-31':  # TODO : need to better way
+                        post_date = '%s-%s' % (s.last_year, span.text)
+                    else:
+                        post_date = '%s-%s' % (s.this_year, span.text)
+
+                    if url is not None:
+                        append_google_sheet(s, user_id, url, title, post_date, '클리앙')
+                    url, user_id, post_date = None, None, None
 
 
 def get_insoya(s, key):
