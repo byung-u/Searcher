@@ -12,15 +12,15 @@ from searcher.google_sheet import append_google_sheet
 
 def search_webs(s):
     for key in s.keys:
-        # get_daum(s, key)
-        # get_daum_agora(s, key)
-        # get_naver(s, key)
-        # get_today_humor(s, key)
-        # get_nate_pann(s, key)
-        # get_twitter_search(s, key)
-        # get_dcinside(s, key)
-        # get_ilbe(s, key)
-        # get_bobedream(s, key)
+        get_daum(s, key)
+        get_daum_agora(s, key)
+        get_naver(s, key)
+        get_today_humor(s, key)
+        get_nate_pann(s, key)
+        get_twitter_search(s, key)
+        get_dcinside(s, key)
+        get_ilbe(s, key)
+        get_bobedream(s, key)
         get_insoya(s, key)
 
         # get_ppomppu(s, key)
@@ -337,7 +337,7 @@ def get_daum(s, key, mode='date'):
                                 'DAUM', '블로그')
             continue
         else:
-            s.logger.info('[drop]', daum_blog_link)  # drop
+            s.logger.info('[drop] %s', daum_blog_link)  # drop
 
     return
 
@@ -378,7 +378,7 @@ def get_title_and_user_id(s, message, blog_type=None):
         else:
             return' '.join(temp[:-2]), s.today
     else:
-        s.logger.error('invalid blog_type: ', blog_type)
+        s.logger.error('invalid blog_type: %s', blog_type)
         return None, None
 
 
