@@ -24,5 +24,13 @@ def main():
     post_date = '%s-%02d-%02d' % (new_date[5], month_converter(new_date[1]), int(new_date[2]))
     print(post_date)
 
+    date = '2017-03-23'
+    cmp_date = '2016-03-23'
+    print(date[:4])
+    if cmp_date.startswith(date[:4]):
+        print('match')
+    else:
+        print('not match')
+
 if __name__ == '__main__':
     main()

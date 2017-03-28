@@ -20,8 +20,8 @@ def main():
         return None
 
     soup = BeautifulSoup(r.text, 'html.parser')
-    for s in soup.find_all(match_soup_class(['srch_list'])):
-        rows = s.findChildren(['dt', 'dl'])
+    for sr in soup.find_all(match_soup_class(['srch_list'])):
+        rows = sr.findChildren(['dt', 'dl'])
 
         for row in rows:
             cells = row.findChildren('dt')
