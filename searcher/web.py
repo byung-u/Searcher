@@ -12,16 +12,16 @@ from searcher.google_sheet import append_google_sheet
 
 def search_webs(s):
     for key in s.keys:
-        get_daum(s, key)
-        get_daum_agora(s, key)
-        get_naver(s, key)
-        get_today_humor(s, key)
-        get_nate_pann(s, key)
-        get_twitter_search(s, key)
-        get_dcinside(s, key)
-        get_ilbe(s, key)
+        # get_daum(s, key)
+        # get_daum_agora(s, key)
+        # get_naver(s, key)
+        # get_today_humor(s, key)
+        # get_nate_pann(s, key)
+        # get_twitter_search(s, key)
+        # get_dcinside(s, key)
+        # get_ilbe(s, key)
         get_bobedream(s, key)
-        get_insoya(s, key)
+        # get_insoya(s, key)
 
         # get_ppomppu(s, key)
         return  # TODO : remove after test
@@ -68,7 +68,7 @@ def get_insoya(s, key):
 
 
 def get_bobedream(s, key):
-    for i in range(1, 5):  # 5 page search
+    for i in range(1, 10):  # 5 page search
         url = 'http://www.bobaedream.co.kr/list?code=freeb&s_cate=&maker_no=&model_no=&or_gu=10&or_se=desc&s_selday=&pagescale=30&info3=&noticeShow=&s_select=&s_key=&level_no=&vdate=&type=list&page=%d' % i
 
         r = get(url)
@@ -90,12 +90,17 @@ def get_bobedream(s, key):
                     if (td.text.find(':') > 0):
                         post_date = s.today
                     else:
-                        post_date = '2017-%s' % td.text.replace('/', '-')
-                    # print(url, user_id, post_date, title)
+                        if s.today[5:] == '12-31':  # TODO : need to better way
+                            post_date = '%s-%s' % (s.last_year, td.text.replace('/', '-'))
+                        elif s.today[5:] == '12-30':  # TODO : need to better way
+                            post_date = '%s-%s' % (s.last_year, td.text.replace('/', '-'))
+                        else:
+                            post_date = '%s-%s' % (s.this_year, td.text.replace('/', '-'))
+                    print(url, user_id, post_date, title)
                     if (url is not None and
                             not url.startswith('http://www.bobaedream.co.kr') and
                             not url.endswith('%2Flist%3Fcode%3Dfreeb')):  # ignore ad and popular
-                        url = 'http://www.bobaedream.co.kr/%s' % url
+                        url = 'http://www.bobaedream.co.kr%s' % url
                         append_google_sheet(s, user_id, url, title, post_date, '보배드림')
                     url, user_id, post_date, title = None, None, None, None
                 else:
