@@ -29,12 +29,12 @@ def search_webs(s):
 
 
 def get_insoya(s, key):
-    for i in range(1, 2):  # 10 page search
+    for i in range(1, 5):  # 5 page search
         url = 'http://www.insoya.com/bbs/zboard.php?id=talkmaple&page=%d&divpage=15' % i
 
         r = get(url)
         if r.status_code != codes.ok:
-            print('[GET] request error')
+            print('[INSOYA] request error')
             return None
 
         soup = BeautifulSoup(r.text, 'html.parser')
