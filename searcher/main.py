@@ -65,7 +65,7 @@ class Searcher:
             CREATE TABLE IF NOT EXISTS sent_msg (
             "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
             "type" text,
-            "info" text,
+            "url" text,
             "update_time" datetime
             )''')
         self.conn.commit()
@@ -105,15 +105,21 @@ class Searcher:
             print('Storing credentials to ' + credential_path)
         return credentials
 
-    def check_duplicate_item(self, web_info, web_type):
-        if (web_type is None) or (web_info is None):
+    def insert_url(self, web_type, url):
+        query = '''INSERT INTO sent_msg VALUES (NULL, "%s", "%s", CURRENT_TIMESTAMP)''' % (web_type, url)
+        self.cursor.execute(query)
+        self.conn.commit()
+
+    def check_duplicate_url(self, web_type, url):
+        if (web_type is None) or (url is None):
             return False
-        web_info = web_info.replace('\"', '\'')  # avoid query failed
-        query = 'SELECT * FROM sent_msg WHERE type="%s" and info="%s"' % (
-                web_type, web_info)
+        url = url.replace('\"', '\'')  # avoid query failed
+        query = 'SELECT * FROM sent_msg WHERE type="%s" and url="%s"' % (
+                web_type, url)
         self.cursor.execute(query)
         data = self.cursor.fetchone()
         if data is None:
+            self.insert_url(web_type, url)
             return False  # not exist
         else:
             return True  # duplicated
