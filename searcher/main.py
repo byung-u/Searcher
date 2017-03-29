@@ -31,10 +31,10 @@ class Searcher:
             self.twitter_access_secret
         )
 
-        now = datetime.now() 
+        now = datetime.now()
         self.today = '%4d-%02d-%02d' % (now.year, now.month, now.day)
         self.this_year = '%4d' % (now.year)
-        self.last_year = '%4d' % (now.year-1)
+        self.last_year = '%4d' % (now.year - 1)
 
         self.daum_client_id = os.environ.get('DAUM_CLIENT_ID')  # daum
         self.daum_secret = os.environ.get('DAUM_CLIENT_SECRET')
