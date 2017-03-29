@@ -36,7 +36,7 @@ def get_last_index(s):
         spreadsheetId=s.spreadsheetId, range=rangeName).execute()
     values = result.get('values', [])
     if not values:
-        print('No data found.')
+        s.logger.error('Data not found')
         return 0
     else:
         idx = 0
