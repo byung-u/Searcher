@@ -12,21 +12,18 @@ from searcher.google_sheet import append_google_sheet
 
 def search_webs(s):
     for key in s.keys:
-        # get_daum(s, key)
-        # get_daum_agora(s, key)
-        # get_naver(s, key)
-        # get_today_humor(s, key)
-        # get_nate_pann(s, key)
-        # get_twitter_search(s, key)
-        # get_dcinside(s, key)
-        # get_ilbe(s, key)
-        # get_bobedream(s, key)
-        # get_insoya(s, key)
+        get_daum(s, key)
+        get_daum_agora(s, key)
+        get_naver(s, key)
+        get_today_humor(s, key)
+        get_nate_pann(s, key)
+        get_twitter_search(s, key)
+        get_dcinside(s, key)
+        get_ilbe(s, key)
+        get_bobedream(s, key)
+        get_insoya(s, key)
         get_clien(s, key)
-
-        # get_ppomppu(s, key)
-        return  # TODO : remove after test
-    return
+        # get_ppomppu(s, key)  # don't know about encoding
 
 
 def get_clien(s, key):
