@@ -46,6 +46,13 @@ def get_last_index(s):
 
 
 def append_google_sheet(s, user_id, link, title, date, web_type, web_sub_type=None):
+
+    duplicate = s.check_duplicate_url(web_type, link)
+    if (duplicate):  # True
+        s.logger.info('[Duplicated] %s', link)
+        print('[duplicated]', link)
+        return
+
     searched_msg = []
     last_idx = get_last_index(s)
     # values = {'values': [['2', '', 'ak홍길동', '', '2016-07-06', '2016-07-06', 'http://cafe.daum.net/3664175/3vE/1029', '', '네이버', '카페', '1'],]}
