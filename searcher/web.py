@@ -13,7 +13,7 @@ from searcher.google_sheet import append_google_sheet
 def search_webs(s):
     for key in s.keys:
         get_daum(s, key)
-        get_daum_agora(s, key)
+        # get_daum_agora(s, key)  # pretty shit...
         get_naver(s, key)
         get_today_humor(s, key)
         get_nate_pann(s, key)
@@ -306,9 +306,15 @@ def get_naver(s, key, mode='blog'):
     items = int(js["display"])
     for i in range(0, items):
         # http://blog.naver.com/ecampus_kgu?Redirect=Log&amp;logNo=220965327425
-        page_num = get_naver_blog_page_num(js["items"][i]["link"])
+        try:
+            get_naver_blog_page_num(js["items"][i]["link"])
+            page_num = get_naver_blog_page_num(js["items"][i]["link"])
+        except:
+            continue
         # http://blog.naver.com/ecampus_kgu
         user_id = get_naver_blog_user_id(js["items"][i]["bloggerlink"])
+        if user_id is None:
+            continue
         naver_blog_link = '%s/%s' % (js["items"][i]["bloggerlink"], page_num)
         post_date = get_naver_blog_post_date(js["items"][i]["postdate"])
         # print(js["items"][i]["description"])
@@ -325,6 +331,9 @@ def get_naver_blog_page_num(naver_blog_inner_link):
 
 def get_naver_blog_user_id(naver_blog_link):
     u = re.search(r'^http://blog.naver.com/(.*)', naver_blog_link)
+    if u is None:
+        print(naver_blog_link)
+        return None
     return u.group(1)
 
 
