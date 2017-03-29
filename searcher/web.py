@@ -30,6 +30,7 @@ def search_webs(s):
 
 
 def get_clien(s, key):
+    date_regex = re.compile(r'^\d+:\d+')
     for i in range(1, 10):  # 10 page search
         url = 'http://www.clien.net/cs2/bbs/board.php?bo_table=kin&page=%d' % i
         r = get(url)
@@ -57,12 +58,16 @@ def get_clien(s, key):
                         user_id = span.text
                 else:
                     span = td.find('span')
-                    if span.text == '12-30':  # TODO : need to better way
-                        post_date = '%s-%s' % (s.last_year, span.text)
-                    elif span.text == '12-31':  # TODO : need to better way
-                        post_date = '%s-%s' % (s.last_year, span.text)
+                    matched = date_regex.match(span.text)
+                    if matched:
+                        post_date = s.today
                     else:
-                        post_date = '%s-%s' % (s.this_year, span.text)
+                        if span.text == '12-30':  # TODO : need to better way
+                            post_date = '%s-%s' % (s.last_year, span.text)
+                        elif span.text == '12-31':  # TODO : need to better way
+                            post_date = '%s-%s' % (s.last_year, span.text)
+                        else:
+                            post_date = '%s-%s' % (s.this_year, span.text)
 
                     if url is not None:
                         append_google_sheet(s, user_id, url, title, post_date, '클리앙')
@@ -137,7 +142,7 @@ def get_bobedream(s, key):
                             post_date = '%s-%s' % (s.last_year, td.text.replace('/', '-'))
                         else:
                             post_date = '%s-%s' % (s.this_year, td.text.replace('/', '-'))
-                    print(url, user_id, post_date, title)
+                    # print(url, user_id, post_date, title)
                     if (url is not None and
                             not url.startswith('http://www.bobaedream.co.kr') and
                             not url.endswith('%2Flist%3Fcode%3Dfreeb')):  # ignore ad and popular
